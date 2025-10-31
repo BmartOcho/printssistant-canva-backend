@@ -1,5 +1,11 @@
 // api/create_design.js
 import axios from "axios";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const CANVA_API_BASE = process.env.CANVA_API_BASE || "https://api.canva.com";
+const ACCESS_TOKEN = process.env.CANVA_ACCESS_TOKEN;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -7,32 +13,46 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { design_type, primary_text, color_palette, style, additional_notes } = req.body;
+    if (!ACCESS_TOKEN) {
+      return res.status(401).json({
+        error: "Missing Canva access token. Go to /auth first and store one.",
+      });
+    }
 
-    const name = `${design_type || "Design"} - ${primary_text?.slice(0, 40) || "Untitled"}`;
-    const width = design_type?.toLowerCase().includes("business") ? 1050 : 1200;
-    const height = design_type?.toLowerCase().includes("card") ? 600 : 800;
+    const { design_type, primary_text } = req.body;
 
-    // Call your already-working /agent/command route from server.js
-    const response = await axios.post(
-      `${process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : "http://127.0.0.1:4000"}/agent/command`,
+    // Create a simple design directly through Canva REST API
+    const createRes = await axios.post(
+      `${CANVA_API_BASE}/rest/v1/designs`,
       {
-        action: "generate_template",
-        payload: { name, width, height }
+        design: {
+          title: `${design_type || "Design"} - ${primary_text || "Untitled"}`,
+          design_type: { type: "custom", width: 1200, height: 800 },
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
       }
     );
 
-    const data = response.data || {};
-    res.status(200).json({
-      design_url: data.url || data.design_url || null,
-      design_id: data.design_id || null,
-      message: "✅ Canva design created successfully"
+    const design = createRes.data?.design || {};
+    const design_url =
+      design.urls?.view_url ||
+      `https://www.canva.com/design/${design.id}/view`;
+
+    return res.status(200).json({
+      design_id: design.id,
+      design_url,
+      message: "✅ Canva design created successfully",
     });
   } catch (error) {
-    console.error("❌ Error in /api/create_design:", error.message);
-    res.status(500).json({
-      error: "Failed to create design",
-      details: error.response?.data || error.message
+    console.error("❌ Canva API error:", error.response?.data || error.message);
+    return res.status(500).json({
+      error: "Canva API call failed",
+      details: error.response?.data || error.message,
     });
   }
 }

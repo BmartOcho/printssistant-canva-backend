@@ -118,6 +118,12 @@ app.get(["/callback", "/"], async (req, res) => {
   }
 
   const redirectUri = chooseRedirectUri(req);
+  console.log("🧠 DEBUG Canva token request:", {
+    CANVA_CLIENT_ID,
+    CANVA_CLIENT_SECRET_LENGTH: CANVA_CLIENT_SECRET?.length,
+    redirectUri,
+    CANVA_API_BASE
+  });
 
   try {
     console.log("🔁 Exchanging auth code for tokens…");

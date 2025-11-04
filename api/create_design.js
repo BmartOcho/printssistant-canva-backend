@@ -1,7 +1,6 @@
 // api/create_design.js
 import axios from "axios";
 import dotenv from "dotenv";
-
 dotenv.config();
 
 const CANVA_API_BASE = process.env.CANVA_API_BASE || "https://api.canva.com";
@@ -14,29 +13,24 @@ export default async function handler(req, res) {
 
   try {
     if (!ACCESS_TOKEN) {
-      return res.status(401).json({
-        error: "Missing Canva access token. Go to /auth first and store one.",
-      });
+      return res.status(401).json({ error: "Missing Canva access token" });
     }
 
     const { design_type, primary_text } = req.body;
+    const name = `${design_type || "Design"} - ${primary_text || "Untitled"}`;
 
-    // Create a simple design directly through Canva REST API
-    const createRes = await axios.post(
-      `${CANVA_API_BASE}/rest/v1/designs`,
-      {
-        design: {
-          title: `${design_type || "Design"} - ${primary_text || "Untitled"}`,
-          design_type: { type: "custom", width: 1200, height: 800 },
-        },
+    // ✅ FIXED Canva payload format
+    const createBody = {
+      design_type: { type: "custom", width: 1200, height: 800 },
+      title: name,
+    };
+
+    const createRes = await axios.post(`${CANVA_API_BASE}/rest/v1/designs`, createBody, {
+      headers: {
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
+        "Content-Type": "application/json",
       },
-      {
-        headers: {
-          Authorization: `Bearer ${ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    });
 
     const design = createRes.data?.design || {};
     const design_url =

@@ -3,10 +3,12 @@
   "builds": [
     { "src": "api/create_design.js", "use": "@vercel/node" },
     { "src": "api/index.js", "use": "@vercel/node" },
-    { "src": "api/server.js", "use": "@vercel/node" }
+    { "src": "api/server.js", "use": "@vercel/node" },
+    { "src": "api/start-workflow.js", "use": "@vercel/node" } 
   ],
   "routes": [
     { "src": "/api/create_design", "dest": "/api/create_design.js" },
+    { "src": "/api/start-workflow", "dest": "/api/start-workflow.js" },
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "src": "/(.*)", "dest": "/api/index.js" }
   ]

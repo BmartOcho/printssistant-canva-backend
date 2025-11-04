@@ -16,30 +16,44 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: "Missing Canva access token" });
     }
 
-    const { design_type, primary_text } = req.body;
-    const name = `${design_type || "Design"} - ${primary_text || "Untitled"}`;
+    const { design_type, primary_text, color_palette, style } = req.body;
 
-    // ✅ FIXED Canva payload format
+    // Create a simple title using what the user provided
+    const titleText = `${design_type || "Design"} - ${primary_text || "Untitled"}`;
+    const description =
+      `Auto-generated design via Printssistant.\n` +
+      (color_palette ? `Colors: ${color_palette}. ` : "") +
+      (style ? `Style: ${style}.` : "");
+
+    // Canva requires a top-level design_type object
     const createBody = {
       design_type: { type: "custom", width: 1200, height: 800 },
-      title: name,
+      title: titleText,
+      description,
     };
 
     const createRes = await axios.post(`${CANVA_API_BASE}/rest/v1/designs`, createBody, {
       headers: {
-        Authorization: `Bearer ${ACCESS_TOKEN}`,
+        Authorization: `Bearer ${ACCESS_TOKEN.trim()}`,
         "Content-Type": "application/json",
       },
     });
 
     const design = createRes.data?.design || {};
-    const design_url =
-      design.urls?.view_url ||
-      `https://www.canva.com/design/${design.id}/view`;
+    const designId = design.id;
+
+    // Build friendly, publicly accessible URLs
+    const viewUrl = designId
+      ? `https://www.canva.com/design/${designId}/view`
+      : null;
+    const editUrl = designId
+      ? `https://www.canva.com/design/${designId}/edit`
+      : null;
 
     return res.status(200).json({
-      design_id: design.id,
-      design_url,
+      design_id: designId,
+      view_url: viewUrl,
+      edit_url: editUrl,
       message: "✅ Canva design created successfully",
     });
   } catch (error) {

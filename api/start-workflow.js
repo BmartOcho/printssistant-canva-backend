@@ -23,14 +23,22 @@ export default async function handler(req, res) {
     },
   });
 
-  // Example dummy step until your Canva flow is wired up
-  const run = await world.startRun({
-    name: "Canva workflow trigger",
-    input: { name, width, height },
-  });
+  try {
+    // ✅ Fixed API call
+    const run = await world.runs.create({
+      name: "Canva workflow trigger",
+      input: { name, width, height },
+    });
 
-  res.status(200).json({
-    message: "Workflow started successfully",
-    runId: run.id,
-  });
+    res.status(200).json({
+      message: "Workflow started successfully",
+      runId: run.id || "(no id returned)",
+    });
+  } catch (err) {
+    console.error("❌ Workflow creation failed:", err);
+    res.status(500).json({
+      error: "Workflow creation failed",
+      details: err.message || err.toString(),
+    });
+  }
 }

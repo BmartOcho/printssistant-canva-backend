@@ -16,18 +16,38 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: "Missing Canva access token" });
     }
 
-    const { design_type, primary_text, color_palette, style } = req.body;
+    // Collect parameters from Agent Builder / user
+    const {
+      design_type,
+      primary_text,
+      color_palette,
+      style,
+      width,
+      height,
+      units,
+      sides
+    } = req.body;
 
-    // Create a simple title using what the user provided
+    // ----- Parameter defaults -----
+    const safeWidth = Number(width) || 1200;
+    const safeHeight = Number(height) || 800;
+    const safeUnits = units || "px"; // px, in, mm
+    const safeSides = Number(sides) === 2 ? 2 : 1;
+
     const titleText = `${design_type || "Design"} - ${primary_text || "Untitled"}`;
-    const description =
-      `Auto-generated design via Printssistant.\n` +
-      (color_palette ? `Colors: ${color_palette}. ` : "") +
-      (style ? `Style: ${style}.` : "");
+    const descriptionLines = [
+      "Auto-generated via Printssistant.",
+      color_palette ? `Colors: ${color_palette}.` : null,
+      style ? `Style: ${style}.` : null,
+      `Size: ${safeWidth}${safeUnits} × ${safeHeight}${safeUnits}.`,
+      `Sides: ${safeSides}.`
+    ].filter(Boolean);
 
-    // Canva requires a top-level design_type object
+    const description = descriptionLines.join(" ");
+
+    // ----- Canva payload -----
     const createBody = {
-      design_type: { type: "custom", width: 1200, height: 800 },
+      design_type: { type: "custom", width: safeWidth, height: safeHeight },
       title: titleText,
       description,
     };
@@ -42,19 +62,19 @@ export default async function handler(req, res) {
     const design = createRes.data?.design || {};
     const designId = design.id;
 
-    // Build friendly, publicly accessible URLs
-    const viewUrl = designId
-      ? `https://www.canva.com/design/${designId}/view`
-      : null;
-    const editUrl = designId
-      ? `https://www.canva.com/design/${designId}/edit`
-      : null;
+    // Public-facing URLs
+    const viewUrl = designId ? `https://www.canva.com/design/${designId}/view` : null;
+    const editUrl = designId ? `https://www.canva.com/design/${designId}/edit` : null;
 
     return res.status(200).json({
       design_id: designId,
       view_url: viewUrl,
       edit_url: editUrl,
-      message: "✅ Canva design created successfully",
+      width: safeWidth,
+      height: safeHeight,
+      units: safeUnits,
+      sides: safeSides,
+      message: "✅ Canva design created successfully"
     });
   } catch (error) {
     console.error("❌ Canva API error:", error.response?.data || error.message);

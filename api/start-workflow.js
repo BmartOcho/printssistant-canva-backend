@@ -23,6 +23,13 @@ export default async function handler(req, res) {
     },
   });
 
+  console.log("DEBUG ENV", {
+    WORKFLOW_VERCEL_AUTH_TOKEN: process.env.WORKFLOW_VERCEL_AUTH_TOKEN ? "set" : "missing",
+    WORKFLOW_VERCEL_ENV: process.env.WORKFLOW_VERCEL_ENV,
+    WORKFLOW_VERCEL_PROJECT: process.env.WORKFLOW_VERCEL_PROJECT,
+    WORKFLOW_VERCEL_TEAM: process.env.WORKFLOW_VERCEL_TEAM,
+  });
+
   try {
     // ✅ Fixed API call
     const run = await world.runs.create({

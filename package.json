@@ -7,13 +7,11 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@workflow/core": "^4.0.1-beta.8",
-    "@workflow/world-vercel": "^4.0.1-beta.5",
     "axios": "^1.13.2",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "workflow": "^4.0.1-beta.11"
+    "workflow": "4.0.1-beta.11"
   },
   "engines": {
     "node": ">=22"

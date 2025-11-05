@@ -16,12 +16,8 @@ export default async function handler(req, res) {
   });
 
   try {
-    const url = `https://api.vercel.com/v1/workflows/runs`; // ✅ Correct endpoint
-    const body = {
-      workflowName: "canva-template-generator", // customize this if needed
-      input: { name, width, height },
-      metadata: { source: "printssistant-canva-backend" },
-    };
+    // ✅ Correct endpoint (singular "workflow")
+    const url = `https://api.vercel.com/v1/workflow/runs`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -32,7 +28,10 @@ export default async function handler(req, res) {
         "x-vercel-project-id": process.env.WORKFLOW_VERCEL_PROJECT,
         "x-vercel-team-id": process.env.WORKFLOW_VERCEL_TEAM,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        workflowName: "canva-template-generator",
+        input: { name, width, height },
+      }),
     });
 
     const data = await response.json();

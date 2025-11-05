@@ -224,27 +224,38 @@ app.get("/refresh", async (req, res) => {
 // ---------- Agent entry (what your 3000 backend calls) ----------
 app.post("/agent/command", async (req, res) => {
   const { action, payload } = req.body || {};
+
+  // Validate action
+  if (!action) {
+    return res.status(400).json({ error: "Missing 'action' in request body" });
+  }
   if (action !== "generate_template") {
-    return res.status(400).json({ error: "Unsupported action" });
+    return res.status(400).json({ error: "Unsupported action", supported: ["generate_template"] });
   }
 
+  // Validate payload
   const { name, width, height } = payload || {};
-  if (!name || !width || !height) {
-    return res.status(400).json({ error: "Missing name, width or height" });
+  const numWidth = Number(width);
+  const numHeight = Number(height);
+  if (!name || Number.isNaN(numWidth) || Number.isNaN(numHeight)) {
+    return res.status(400).json({ error: "Invalid payload: require name (string), width (number), height (number)" });
+  }
+  if (numWidth <= 0 || numHeight <= 0) {
+    return res.status(400).json({ error: "width and height must be positive numbers" });
   }
 
   try {
     const tokens = loadTokens();
     const accessToken = tokens?.access_token || process.env.CANVA_ACCESS_TOKEN;
     if (!accessToken) {
-      return res.status(401).json({ error: "Missing access token. Visit /auth first." });
+      return res.status(401).json({ error: "Missing access token. Visit /auth first or set CANVA_ACCESS_TOKEN." });
     }
 
     // Create the design
     const createBody = {
       design: {
-        design_type: { type: "custom", width: Number(width), height: Number(height) },
-        title: String(name),
+        design_type: { type: "custom", width: numWidth, height: numHeight },
+        title: String(name).trim(),
       },
     };
 
@@ -253,8 +264,16 @@ app.post("/agent/command", async (req, res) => {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      timeout: 15000,
+      timeout: 20000,
+      validateStatus: (s) => s >= 200 && s < 500 // surface Canva errors with body
     });
+
+    if (createRes.status >= 400) {
+      return res.status(createRes.status).json({
+        error: "Canva API returned an error",
+        details: createRes.data,
+      });
+    }
 
     // Canva returns { design: { id, urls: { edit_url, view_url }, ... } }
     const design = createRes.data?.design || {};
@@ -263,7 +282,7 @@ app.post("/agent/command", async (req, res) => {
     const edit_url = design.urls?.edit_url;
 
     if (!id) {
-      return res.status(500).json({
+      return res.status(502).json({
         error: "Design ID missing from Canva response",
         details: createRes.data,
       });

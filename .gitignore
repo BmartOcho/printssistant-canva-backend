@@ -2,5 +2,12 @@
 .env
 .env.local
 .env.*.local
+
+# Vercel local metadata
 .vercel
+
+# Dependencies
 node_modules
+
+# Secrets
+tokens.json

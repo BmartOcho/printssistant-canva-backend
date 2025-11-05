@@ -12,6 +12,12 @@ export default async function handler(req, res) {
     res.status(400).json({ error: "Missing name, width, or height" });
     return;
   }
+  console.log("DEBUG ENV", {
+    auth: process.env.WORKFLOW_VERCEL_AUTH_TOKEN ? "set" : "missing",
+    env: process.env.WORKFLOW_VERCEL_ENV,
+    project: process.env.WORKFLOW_VERCEL_PROJECT,
+    team: process.env.WORKFLOW_VERCEL_TEAM
+  });
 
   // Connect to Vercel World
   const world = createVercelWorld({

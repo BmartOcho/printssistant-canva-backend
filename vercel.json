@@ -1,12 +1,12 @@
 {
   "version": 2,
   "functions": {
-    "api/*.js": {
-      "runtime": "@vercel/node@4.0.0"
-    },
     "api/**/*.js": {
       "runtime": "@vercel/node@4.0.0"
     }
+  },
+  "workflows": {
+    "source": "workflow/**/*.js"
   },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },

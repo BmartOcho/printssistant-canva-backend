@@ -16,8 +16,11 @@ export default async function handler(req, res) {
   });
 
   try {
-    // ✅ Correct endpoint (singular "workflow")
     const url = `https://api.vercel.com/v1/workflow/runs`;
+    const body = {
+      workflowName: "canva-template-generator",
+      input: { name, width, height },
+    };
 
     const response = await fetch(url, {
       method: "POST",
@@ -28,13 +31,18 @@ export default async function handler(req, res) {
         "x-vercel-project-id": process.env.WORKFLOW_VERCEL_PROJECT,
         "x-vercel-team-id": process.env.WORKFLOW_VERCEL_TEAM,
       },
-      body: JSON.stringify({
-        workflowName: "canva-template-generator",
-        input: { name, width, height },
-      }),
+      body: JSON.stringify(body),
     });
 
-    const data = await response.json();
+    // ✅ Safer JSON parsing
+    let text = await response.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      console.warn("⚠️ Non-JSON response:", text);
+      data = { raw: text };
+    }
 
     if (!response.ok) {
       console.error("❌ Workflow creation failed:", data);

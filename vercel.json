@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "workflows": {
+    "src": "workflows/**/*.js"
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/$", "destination": "/api/index.js" },

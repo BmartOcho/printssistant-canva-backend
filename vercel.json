@@ -1,15 +1,12 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "api/start-workflow.js", "use": "@vercel/node" },
-    { "src": "api/create_design.js", "use": "@vercel/node" },
-    { "src": "api/index.js", "use": "@vercel/node" },
-    { "src": "api/server.js", "use": "@vercel/node" }
-  ],
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs22.x"
+    }
+  },
   "routes": [
-    { "src": "/api/start-workflow", "dest": "/api/start-workflow.js" },
-    { "src": "/api/create_design", "dest": "/api/create_design.js" },
-    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/api/index.js" }
   ]
 }
